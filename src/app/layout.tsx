@@ -4,7 +4,6 @@ import { Toaster } from "@/components/ui/toaster"
 import { WalletProvider } from "@/components/providers/wallet-provider"
 import { ThemeProvider } from "next-themes"
 import "./globals.css"
-import { Navbar } from "@/components/Navbar"
 
 const font = localFont({
   src: "./fonts/Karla-Regular.ttf",
@@ -26,22 +25,17 @@ export default function RootLayout({
     <ClerkProvider>
     <html lang="en" suppressHydrationWarning>
       <body className={font.className}>
-      <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <WalletProvider>
-              <div className="min-h-screen flex flex-col">
-                <Navbar />
-                <main className="flex-grow">
-                  {children}
-                </main>
-              </div>
-              <Toaster />
-            </WalletProvider>
-          </ThemeProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <WalletProvider>
+            {children}
+            <Toaster />
+          </WalletProvider>
+        </ThemeProvider>
       </body>
     </html>
   </ClerkProvider>
