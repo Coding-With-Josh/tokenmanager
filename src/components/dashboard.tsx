@@ -26,9 +26,8 @@ interface TokenAccount {
 interface NFTCollection {
   address: string;
   name: string;
-  description?: string; // Make description optional
+  description: string;
   size: number;
-  symbol?: string; // Add symbol if needed
 }
 
 
@@ -59,13 +58,7 @@ export function Dashboard() {
 
       const nftService = new NFTService(connection, wallet)
       const collections = await nftService.getCollections()
-      // Convert collections to match NFTCollection interface
-      const formattedCollections = collections.map((collection: { address: string; name: string; description?: string; size: number; symbol?: string; }) => ({
-        ...collection,
-        description: collection.description || '',
-        size: collection.size || 0,
-      }))
-      setNftCollections(formattedCollections)
+      setNftCollections(collections)
 
       // Save NFT collections to database
       await fetch('/api/nfts', {

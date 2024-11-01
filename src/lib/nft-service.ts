@@ -1,91 +1,35 @@
+import {
+  Metaplex,
+  walletAdapterIdentity,
+  toMetaplexFileFromBrowser,
+  MetaplexFile,
+} from "@metaplex-foundation/js"
 import { Connection, PublicKey } from "@solana/web3.js"
 import { WalletContextState } from "@solana/wallet-adapter-react"
-import { Metaplex, walletAdapterIdentity, bundlrStorage, toMetaplexFile } from "@metaplex-foundation/js"
-import { prisma } from "@/lib/prisma"
 
 export class NFTService {
   private metaplex: Metaplex
 
-  constructor(private connection: Connection, private wallet: WalletContextState) {
-    this.metaplex = Metaplex.make(connection)
-      .use(walletAdapterIdentity(this.wallet))
-      .use(bundlrStorage())
+  constructor(
+    connection: Connection,
+    wallet: WalletContextState
+  ) {
+    this.metaplex = Metaplex.make(connection).use(walletAdapterIdentity(wallet))
   }
 
-  async createNFT(name: string, description: string, imageUrl: string) {
-    if (!this.wallet.publicKey) throw new Error("Wallet not connected")
-
-    // Upload the image to Arweave
-    const response = await fetch(imageUrl)
-    const imageArrayBuffer = await response.arrayBuffer()
-    const imageFile = toMetaplexFile(new Uint8Array(imageArrayBuffer), 'image.png', { contentType: 'image/png' })
-    const imageUri = await this.metaplex.storage().upload(imageFile)
-
-    // Create the NFT
-    const { nft } = await this.metaplex.nfts().create({
-      name: name,
-      description: description,
-      uri: imageUri,
-    })
-
-    // Store NFT metadata in the database
-    await prisma.nft.create({
-      data: {
-        address: nft.address.toBase58(),
-        name: name,
-        description: description,
-        imageUrl: imageUri,
-        ownerAddress: this.wallet.publicKey.toBase58(),
-      },
-    })
-
-    return nft.address.toBase58()
-  }
-
-  async createCollection(name: string, symbol: string) {
-    if (!this.wallet.publicKey) throw new Error("Wallet not connected")
-
-    const { nft } = await this.metaplex.nfts().createCollection({
-      name: name,
-      symbol: symbol,
-    })
-
-    // Store collection metadata in the database
-    await prisma.collection.create({
-      data: {
-        address: nft.address.toBase58(),
-        name: name,
-        symbol: symbol,
-        ownerAddress: this.wallet.publicKey.toBase58(),
-      },
-    })
-
-    return nft.address.toBase58()
-  }
-
-<<<<<<< HEAD
   async getNFTs() {
-    if (!this.wallet.publicKey) throw new Error("Wallet not connected")
-
     const nfts = await this.metaplex.nfts().findAllByOwner({
-      owner: this.wallet.publicKey,
+      owner: this.metaplex.identity().publicKey,
     })
-
-    const nftData = await Promise.all(nfts.map(async (nft) => {
-      const dbNft = await prisma.nft.findUnique({
-        where: { address: nft.address.toBase58() },
-      })
-
-      return {
-        address: nft.address.toBase58(),
-        name: dbNft?.name || nft.name,
-        description: dbNft?.description || nft.json?.description || '',
-        image: dbNft?.imageUrl || nft.json?.image || '',
-      }
+  
+    return nfts.map(nft => ({
+      address: nft.address.toString(),
+      name: nft.name,
+      description: nft.json?.description || '',
+      image: nft.json?.image || '',
     }))
+  }
 
-    return nftData
-=======
   async createCollection(
     name: string,
     symbol: string,
@@ -138,20 +82,19 @@ export class NFTService {
     })
 
     return { uri }
->>>>>>> parent of b80cee1 (navbar updated with routes)
   }
 
   async getCollections() {
-    if (!this.wallet.publicKey) throw new Error("Wallet not connected")
-
-    const collections = await prisma.collection.findMany({
-      where: { ownerAddress: this.wallet.publicKey.toBase58() },
+    const nfts = await this.metaplex.nfts().findAllByOwner({
+      owner: this.metaplex.identity().publicKey,
     })
 
-    return collections.map(collection => ({
-      address: collection.address,
-      name: collection.name,
-      symbol: collection.symbol,
+    return nfts.filter(nft => nft.collection === null).map(nft => ({
+      address: nft.address.toString(),
+      name: nft.name,
+      description: nft.json?.description || '',
+      image: nft.json?.image || '',
+      size: 0, // You would need to fetch this separately
     }))
   }
 }
