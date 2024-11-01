@@ -17,6 +17,19 @@ export class NFTService {
     this.metaplex = Metaplex.make(connection).use(walletAdapterIdentity(wallet))
   }
 
+  async getNFTs() {
+    const nfts = await this.metaplex.nfts().findAllByOwner({
+      owner: this.metaplex.identity().publicKey,
+    })
+  
+    return nfts.map(nft => ({
+      address: nft.address.toString(),
+      name: nft.name,
+      description: nft.json?.description || '',
+      image: nft.json?.image || '',
+    }))
+  }
+
   async createCollection(
     name: string,
     symbol: string,
