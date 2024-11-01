@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import prisma from '@/lib/prisma'
 
 export async function POST(req: Request) {
   if (req.method === 'POST') {
@@ -24,7 +22,7 @@ export async function POST(req: Request) {
         })),
       })
 
-      return  NextResponse.json({ success: true, count: createdNFTs.count })
+      return NextResponse.json({ success: true, count: createdNFTs.count })
     } catch (error) {
       console.error('Request error', error)
       return NextResponse.json({ error: 'Error creating NFTs' }, { status: 500 })
